@@ -1,0 +1,4 @@
+streamlit
+plotly
+yfinance
+python3.9
