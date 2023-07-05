@@ -1,25 +1,28 @@
-import yfinance as yf
+import pandas as pd
 from datetime import datetime, timedelta
+import yfinance as yf
 import plotly.graph_objects as go
+import streamlit as st
 
-# データ取得期間を設定します。今回は過去20年間のデータを取得します。
-end_date = datetime.now()
-start_date = end_date - timedelta(days=26*365)  # 26年前
+end = datetime.today()
+start = end - timedelta(days=26*365)
 
-# Yahoo FinanceからS&P 500, Nikkkei225とUSD/JPYのデータを取得します。
-sp500 = yf.download('^GSPC', start=start_date, end=end_date)
-usd_jpy = yf.download('JPY=X', start=start_date, end=end_date)
+hist_sp500 = yf.Ticker('^GSPC').history(start=start, end=end)
+hist_usd_jpy = yf.Ticker('JPY=X').history(start=start, end=end)
 
+hist_sp500 = hist_sp500['Close']
+hist_sp500.index = hist_sp500.index.strftime('%Y-%m-%d')
+hist_usd_jpy = hist_usd_jpy['Close']
+hist_usd_jpy.index = hist_usd_jpy.index.strftime('%Y-%m-%d')
 
-# S&P 500の価格を円に変換します。
-sp500_in_jpy = sp500['Close'] * usd_jpy['Close']
-sp500_in_jpy.dropna(inplace=True)  # データの欠損値を削除します。
+hist_sp500_in_jpy = hist_sp500 * hist_usd_jpy
+hist_sp500_in_jpy.dropna(inplace=True) 
 
 # データとタイトルをペアにしたリストを作成
 data_and_titles = [
-    (sp500['Close'], 'S&P 500 (USD)'),
-    (usd_jpy['Close'], 'USD/JPY Rate'),
-    (sp500_in_jpy, 'S&P 500 (JPY)')
+    (hist_sp500, 'S&P 500 (USD)'),
+    (hist_usd_jpy, 'USD/JPY Rate'),
+    (hist_sp500_in_jpy, 'S&P 500 (JPY)')
 ]
 
 # 各データに対してグラフを作成
@@ -38,4 +41,4 @@ for data, title in data_and_titles:
     )
 
     # グラフを表示
-    fig.show()
+    st.plotly_chart(fig) 
